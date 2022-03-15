@@ -44,6 +44,8 @@ def train(args):
     archive.SubFolder = args.SubFolder
     archive.mktree(args.dir_saved)
     
+    args.dir_log = f"{args.dir_saved}/{args.project_name}"
+    
     # transform 설정.
     args.transform = ToTensor()
     
@@ -97,7 +99,7 @@ def train(args):
             #########################################################################
             
             # 모델 저장. ############################################################
-            path_save = archive.find(f"{args.dir_saved}/{args.project_name}", "Model")
+            path_save = archive.find(args.dir_log, "Model")
             savetool = SaveTool(path_save, args.net, period=args.save_frequency)
             
             savetool.save_per_epoch(epoch)
@@ -105,7 +107,7 @@ def train(args):
             #########################################################################
             
             # 오답 이유 분석 ########################################################
-            path_artifact = archive.find(f"{args.dir_saved}/{args.project_name}", "Artifact")
+            path_artifact = archive.find(args.dir_log, "Artifact")
             CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=path_artifact, period=args.save_frequency)
             
             CMtools.confusion_matrix(epoch)
@@ -136,8 +138,9 @@ if __name__ == '__main__':
         )
     
     # args 초기화 과정.
-    args.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    # args.device = torch.device('cpu')
+    what_device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    print(what_device)
+    args.device = torch.device(what_device)
     args.project_name = args.project_name if args.project_name else str(id(args))
     args.dir_saved = args.dir_saved if args.dir_saved else '/opt/ml/workspace/template/saved'
     args.save_frequency = args.save_frequency if args.save_frequency else 1
