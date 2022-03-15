@@ -21,7 +21,7 @@ class Container():
     보관소 1과 보관소 2의 내용 훼손을 지양하여 설계했고 
     최종 결과물의 종합은 보관소 3에서 이뤄지도록 설계.
     
-    결과물의 종합은 .setup() 메서드를 이용해 실현.
+    결과물의 종합은 ._setup() 메서드를 이용해 실현.
     
     또 결과물을 Json 파일 형태로 저장할 수 있게 .record() 메서드로 실현.
     """
@@ -31,11 +31,11 @@ class Container():
         self.json = {}
         
         if json_path:
-            self.open_json(json_path)
+            self._open_json(json_path)
         if argparse:
             self.argparse = argparse
         
-        self.setup()
+        self._setup()
         
     @classmethod
     def inherit(cls, dictionary:dict):
@@ -48,27 +48,26 @@ class Container():
     
     ######################################################
     # Json 
-    def open_json(self, path):
+    def _open_json(self, path):
         with open(path, 'r') as f:
             new_dict = json.load(f)
             self.json = new_dict
     
-    def update_json(self, path):
+    def _update_json(self, path):
         with open(path, 'r') as f:
             new_dict = json.loads(f)
             self.json.update(new_dict)
         
-        self.setup()
+        self._setup()
     
     def record(self, path:str):
         with open(path, 'w') as f:
-            # stuff = self.dict()
             stuff = self.json
             json.dump(stuff, f)
                 
     ######################################################
     # 정보 종합
-    def setup(self):
+    def _setup(self):
         if self.json:
             new_dict_json = dict(self.json)
             self.__dict__.update(new_dict_json)
@@ -85,7 +84,7 @@ class Container():
         return stuff
     
     def __repr__(self):
-        BOUNDRY = '=' * 30
+        BOUNDRY = '=' * 50
         GAP_KEY_VALUE = 3 * '\t'
         stuff = self.dict()
         
@@ -109,26 +108,39 @@ Key\t{GAP_KEY_VALUE}Value
         return getattr(default_repo, obj)
 
     def get_obj_with_param(self, param:str, local_repo, remote_repo=None, **kwargs_params):
-        raw = self.get_obj(self[param]['type'], local_repo, remote_repo)
+        method = self.get_obj(self[param]['type'], local_repo, remote_repo)
         kwargs = Container.inherit(self[param]['args']).dict()
         kwargs.update(kwargs_params)
-        return raw(**kwargs)
+        return method(**kwargs)
 
 # %%
 if __name__ == '__main__':
     a = Container()
     a.name = 'jung hoon'
     a.device = 's21'
+    
     print(a)
+    # [console]
+    # In This Containers
+    # ==============================
+    # Key				Value
+    # ==============================
+    # name      			jung hoon
+    # device    			s21
+    
 
 # %%
 if __name__ == '__main__':
     b = Container(json_path='test.json')
     b.nick = 'iksadNorth'
     b.device = 'Lenovo'
+    
     print(b)
-
+    # In This Containers
+    # ==============================
+    # Key				Value
+    # ==============================
+    # name      			jung hoon
+    # device    			Lenovo
+    # nick      			iksadNorth
 # %%
-
-
-
