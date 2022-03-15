@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader, Dataset, Sampler
 
 from typing import Callable, Optional, T_co, Callable, Sequence
 
-from config.adapter import adapter, adapter_class
+from config.adapter import adapter
 
 
 class BaseLoader(DataLoader): 
