@@ -9,6 +9,9 @@ from torchvision.transforms import ToTensor
 
 # 기타 모듈들.
 import argparse
+import wandb
+
+wandb.init(project="complemented_Image_Classification_Pjt", entity="iksadnorth")
 
 # 내가 만든 모듈들.
 from dataloader.dataloader import BaseLoader
@@ -82,19 +85,23 @@ def train(args):
             val_preds, val_answers, val_data = Trainer.infer(args, valid_loader)
 
             # 모델 평가. ############################################################
-            scores = {matric.__name__ : matric(val_preds, val_answers) for matric in args.matrics}
             train_score = args.main_matric.__name__, args.main_matric(train_preds, train_answers)
             val_score = args.main_matric.__name__, args.main_matric(val_preds, val_answers)
+            scores = {matric.__name__ : matric(val_preds, val_answers) for matric in args.matrics}
             #########################################################################
             
             # 모델 로깅. ############################################################
+            dict_log = {
+                f'train_{train_score[0]}' : train_score[1],
+                f'valid_{val_score[0]}' : val_score[1],
+            }
+            dict_log.update({f'valid_{k}' : v for k, v in scores.items()})
             
-            print(f'train_{train_score[0]} : {train_score[1]:2.4f}')
-            print(f'valid_{val_score[0]} : {val_score[1]:2.4f}')
-            for k, v in scores.items():
-                print(f'valid_{k} : {v:2.4f}')
             # to console
+            for k, v in dict_log.items():
+                print(f'{k} : {v}')
             # to WandB
+            wandb.log(dict_log)
             # to file
             #########################################################################
             
@@ -141,9 +148,15 @@ if __name__ == '__main__':
     what_device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
     print(what_device)
     args.device = torch.device(what_device)
+    
     args.project_name = args.project_name if args.project_name else str(id(args))
+    wandb.run.name = args.project_name
+    wandb.run.save()
+    
     args.dir_saved = args.dir_saved if args.dir_saved else '/opt/ml/workspace/template/saved'
     args.save_frequency = args.save_frequency if args.save_frequency else 1
+    
+    wandb.config.update(args.dict())
     
     train(args)
     
