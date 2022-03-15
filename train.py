@@ -22,6 +22,7 @@ from EDA.ConfusionMatrix import Analsis
 from utill.util import *
 from utill.PathTree import PathTree
 import utill.split as repo_split
+from utill.TimeCheck import TimeCheck
 
 # Remote_repo.
 from torchvision import datasets as remote_vision_dataset
@@ -41,6 +42,10 @@ import model.loss as local_loss
 
 # %%
 def train(args):
+    # 실행 시간 분석
+    tc = TimeCheck()
+    
+    tc.mark('설정 준비') 
     # 프로젝트 결과 보관 디렉토리 구조 정의
     archive = PathTree(args.dir_tree)
     archive.project_name = [args.project_name]
@@ -71,26 +76,32 @@ def train(args):
     # matrics 설정.
     args.main_matric = args.get_obj(args['MainMatric'], None, remote_metrics)
     args.matrics = [args.get_obj(v, None, remote_metrics) for v in args['Matrics']]
-        
+    tc.mark('설정 완료') 
+    
     break_flag = False
     break_reason = '????'
     # 모델 학습
     for epoch in range(args.epoch):
         for train_dataset, valid_dataset in args.get_obj_with_param('split', repo_split, dataset=args.dataset):
+            tc.mark('DataLoader 설정') 
             train_loader = BaseLoader(Container.inherit(args['train']), dataset=train_dataset)
             valid_loader = BaseLoader(Container.inherit(args['valid']), dataset=valid_dataset)
             
-            train_preds, train_answers, train_loss = Trainer.train(args, train_loader)
-                
+            tc.mark('훈련 시작')
+            train_preds, train_answers = Trainer.train(args, train_loader)
+            
+            tc.mark('평가 시작')
             val_preds, val_answers, val_data = Trainer.infer(args, valid_loader)
 
             # 모델 평가. ############################################################
+            tc.mark('Score 계산')
             train_score = args.main_matric.__name__, args.main_matric(train_preds, train_answers)
             val_score = args.main_matric.__name__, args.main_matric(val_preds, val_answers)
             scores = {matric.__name__ : matric(val_preds, val_answers) for matric in args.matrics}
             #########################################################################
             
             # 모델 로깅. ############################################################
+            tc.mark('모델 로깅 설정 준비')
             dict_log = {
                 f'train_{train_score[0]}' : train_score[1],
                 f'valid_{val_score[0]}' : val_score[1],
@@ -98,37 +109,45 @@ def train(args):
             dict_log.update({f'valid_{k}' : v for k, v in scores.items()})
             
             # to console
+            tc.mark('console 로깅')
             for k, v in dict_log.items():
                 print(f'{k} : {v}')
             # to WandB
+            tc.mark('WandB 로깅')
             wandb.log(dict_log)
             # to file
             #########################################################################
             
-            # 모델 저장. ############################################################
+            # 모델 저장. #############################################################
+            tc.mark('모델 저장')
             path_save = archive.find(args.dir_log, "Model")
-            savetool = SaveTool(path_save, args.net, period=args.save_frequency)
+            savetool = SaveTool(path_save, args.net, save_frequency=args.save_frequency)
             
             savetool.save_per_epoch(epoch)
             savetool.save_best(val_score[1])
             #########################################################################
             
-            # 오답 이유 분석 ########################################################
+            # 오답 이유 분석 #########################################################
+            tc.mark('오답 이유 분석')
             path_artifact = archive.find(args.dir_log, "Artifact")
-            CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=path_artifact, period=args.save_frequency)
+            CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=path_artifact, save_frequency=args.save_frequency)
             
             CMtools.confusion_matrix(epoch)
             CMtools.label_incorrected(epoch)
             #########################################################################
+        tc.mark(f'epoch_{epoch} 종료')
             
         if break_flag:
             print(f'Break Loop!!! Because of {break_reason}')
             break
     
     # Config.json 생성
-    loc_config = archive.find(f"{args.dir_saved}/{args.project_name}", "Config")
-    args.record(f"{loc_config}/config.json")
+    tc.mark('Config.json 생성')
+    path_config = archive.find(args.dir_log, "Config")
+    args.record(f"{path_config}/config.json")
     print('Finished Training')
+    tc.mark('Finished Training')
+    tc.print()
 
 # %%
 if __name__ == '__main__':

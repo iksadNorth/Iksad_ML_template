@@ -25,11 +25,11 @@ def load(path, net=None):
 
 
 class SaveTool():
-    def __init__(self, path, net, period=1, param=False) -> None:
+    def __init__(self, path, net, save_frequency=1, param=False) -> None:
         self.best_score = -np.inf
         
         self.param = param
-        self.period = period
+        self.period = save_frequency
         self.period = int(self.period)
         self.path = path
         self.net = net

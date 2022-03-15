@@ -13,13 +13,13 @@ from functools import reduce
 
 
 class Analsis():
-    def __init__(self, preds, answers, data, classes, path_artifact=None, period=1) -> None:
+    def __init__(self, preds, answers, data, classes, path_artifact=None, save_frequency=1) -> None:
         self.answers = answers
         self.preds = preds
         self.data = data
         
         self.path_artifact = path_artifact
-        self.period = period
+        self.period = save_frequency
         self.period = int(self.period)
         
         

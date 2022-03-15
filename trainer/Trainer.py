@@ -12,7 +12,7 @@ from tqdm import tqdm
 def train(train_loader, net, criterion, optimizer, device, scheduler):
     batch_size = train_loader.batch_size 
     length = len(train_loader)
-    outputs_stacked, labels_stacked, loss_stacked = [], [], 0.0
+    outputs_stacked, labels_stacked = [], []
     
     net.to(device)
     net.train()
@@ -36,12 +36,8 @@ def train(train_loader, net, criterion, optimizer, device, scheduler):
         outputs = outputs.argmax(dim=-1)
         outputs_stacked.extend(outputs)
         labels_stacked.extend(labels)
-        loss_stacked += loss
-
-    loss_stacked /= batch_size
-    loss_stacked /= len(train_loader)
     
-    return torch.tensor(outputs_stacked), torch.tensor(labels_stacked), loss_stacked
+    return torch.tensor(outputs_stacked), torch.tensor(labels_stacked)
 
 # %%
 @torch.no_grad()
