@@ -1,0 +1,71 @@
+{
+    "project_name": "for_debug",
+    "epoch" : 1,
+
+    "dir_tree" : "/opt/ml/workspace/template/saved/$project_name",
+    "dir_saved": "/opt/ml/workspace/saved",
+    "save_frequency" : 1,
+
+    "SubFolder" : ["Artifact", "Config", "Metrics", "Model"],
+
+    "DataSet": {
+        "type": "CIFAR10",
+        "args":{
+            "root":"data", 
+            "train":true, 
+            "transform": null, 
+            "download":true
+        }
+    },
+
+    "Net": {
+        "type": "PretrainedModel",
+        "args":{
+            "num_classes": 10,
+            "model_using": "efficientnet_b3",
+            "pretrained": true, 
+            "freeze": false
+        }
+    },
+
+    "Optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001
+        }
+    },
+
+    "Scheduler": {
+        "type": "CosineAnnealingLR",
+        "args":{
+            "T_max" : 5
+        }
+    },
+    
+    "Criterion": "CrossEntropyLoss",
+
+    "MainMatric": "accuracy",
+
+    "Matrics": [
+        "f1_score"
+    ],
+
+    "split" : {
+        "type": "_split_train_val",
+        "args":{
+            "ratio" : 0.975, 
+            "method_scrape" : "_scrape_random"
+        }
+    },
+
+    "train": {
+        "batch_size": 25, 
+        "shuffle": true,
+        "num_workers" : 1
+    },
+    "valid": {
+        "batch_size": 100, 
+        "shuffle": false,
+        "num_workers" : 1
+    }
+}
