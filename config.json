@@ -35,7 +35,8 @@
             "model_using": "efficientnet_b3",
             "pretrained": true, 
             "freeze": false
-        }
+        },
+        "NetSaved" : null
     },
 
     "Optimizer": {

@@ -10,8 +10,10 @@ class TimeCheck():
         self.flag = flag
     
     def __getattribute__(self, __name: str):
-        if self.flag:
-            return self.__name
+        if object.__getattribute__(self, 'flag'):
+            return object.__getattribute__(self, __name)
+        else:
+            return lambda *args, **kwargs: None
         
     
     def mark(self, name_flag:str):
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     check.mark('fourth')
     sleep(1)
     
-    check.print()
+    check.print("terminate")
     
     
 # %%

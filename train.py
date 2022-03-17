@@ -65,7 +65,10 @@ def train(args):
     args.dataset = args.get_obj_with_param('DataSet', local_dataset, remote_vision_dataset,transform=args.transform)
     
     # model을 로드하고 가능하다면 GPU 이용할 수 있게 만들기
-    args.net = args.get_obj_with_param('Net', local_model, remote_vision_model)
+    if args['Net']['NetSaved']:
+        args.net = load(args.net['NetSaved'])
+    else:
+        args.net = args.get_obj_with_param('Net', local_model, remote_vision_model)
     print("can use", torch.cuda.device_count(), "GPUs")
     args.net = nn.DataParallel(args.net)
     
@@ -148,7 +151,7 @@ def train(args):
             CMtools.label_incorrected(epoch)
             #########################################################################
             tc.print('오답 이유 분석 종료')
-        tc.mark(f'epoch_{epoch} 종료')
+        tc.mark_(f'epoch_{epoch} 종료')
             
         if break_flag:
             print(f'Break Loop!!! Because of {break_reason}')
