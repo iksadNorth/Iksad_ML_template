@@ -11,9 +11,13 @@ import pandas as pd
 from einops import rearrange
 from functools import reduce
 
+from config.adapter import adapter
+
 
 class Analsis():
-    def __init__(self, preds, answers, data, classes, path_artifact=None, save_frequency=1) -> None:
+    @adapter
+    def __init__(self, preds, answers, data, classes, path_artifact=None, save_frequency=1, tc=None) -> None:
+        tc.mark('Analsis 진입')
         self.answers = answers
         self.preds = preds
         self.data = data
@@ -21,16 +25,20 @@ class Analsis():
         self.path_artifact = path_artifact
         self.period = save_frequency
         self.period = int(self.period)
+        tc.mark('Analsis 필드 초기화 완료')
         
-        
-        self.df = pd.DataFrame({'answers': self.answers.cpu().numpy().tolist(), 'preds': self.preds.cpu().numpy().tolist(), 'data': self.data.cpu().numpy().tolist()})
+        answers_list, preds_list, data_list = self.answers.cpu().numpy().tolist(), self.preds.cpu().numpy().tolist(), self.data.cpu().numpy().tolist()
+        tc.mark('tensor ~ list 형변환 완료')
+        self.df = pd.DataFrame({'answers': answers_list, 'preds': preds_list, 'data': data_list})
         self.df_incorrect = self.df[self.df['answers'] != self.df['preds']]
+        tc.mark('DataFrame 구성 완료')
         
         self.classes = classes
         self.dict_classes = {i : v for i, v in enumerate(self.classes)}
 
         self.answers = np.array(self.answers)
         self.preds = np.array(self.preds)
+        tc.mark('array로 형변환')
         
     def confusion_matrix(self, epoch, fontsize=14, annotsize=14):
         if epoch % self.period == (self.period-1):

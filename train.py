@@ -17,9 +17,9 @@ wandb.init(project="complemented_Image_Classification_Pjt", entity="iksadnorth")
 from dataloader.dataloader import BaseLoader
 from trainer import Trainer
 from config.container import Container
-from EDA.ConfusionMatrix import Analsis
 
 from utill.util import *
+from utill.ConfusionMatrix import Analsis
 from utill.PathTree import PathTree
 import utill.split as repo_split
 from utill.TimeCheck import TimeCheck
@@ -44,6 +44,7 @@ import model.loss as local_loss
 def train(args):
     # 실행 시간 분석
     tc = TimeCheck()
+    args.tc = tc
     
     tc.mark('설정 준비') 
     # 프로젝트 결과 보관 디렉토리 구조 정의
@@ -76,7 +77,7 @@ def train(args):
     # matrics 설정.
     args.main_matric = args.get_obj(args['MainMatric'], None, remote_metrics)
     args.matrics = [args.get_obj(v, None, remote_metrics) for v in args['Matrics']]
-    tc.mark('설정 완료') 
+    tc.print('설정 완료')
     
     break_flag = False
     break_reason = '????'
@@ -120,8 +121,8 @@ def train(args):
             
             # 모델 저장. #############################################################
             tc.mark('모델 저장')
-            path_save = archive.find(args.dir_log, "Model")
-            savetool = SaveTool(path_save, args.net, save_frequency=args.save_frequency)
+            args.path_save = archive.find(args.dir_log, "Model")
+            savetool = SaveTool(args.path_save, args)
             
             savetool.save_per_epoch(epoch)
             savetool.save_best(val_score[1])
@@ -129,12 +130,16 @@ def train(args):
             
             # 오답 이유 분석 #########################################################
             tc.mark('오답 이유 분석')
-            path_artifact = archive.find(args.dir_log, "Artifact")
-            CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=path_artifact, save_frequency=args.save_frequency)
+            args.path_artifact = archive.find(args.dir_log, "Artifact")
+            # CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=args.path_artifact, save_frequency=args.save_frequency)
+            CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, args)
             
+            tc.mark('confusion_matrix 시작')
             CMtools.confusion_matrix(epoch)
+            tc.mark('label_incorrected 시작')
             CMtools.label_incorrected(epoch)
             #########################################################################
+            tc.print('오답 이유 분석 종료')
         tc.mark(f'epoch_{epoch} 종료')
             
         if break_flag:
@@ -146,8 +151,7 @@ def train(args):
     path_config = archive.find(args.dir_log, "Config")
     args.record(f"{path_config}/config.json")
     print('Finished Training')
-    tc.mark('Finished Training')
-    tc.print()
+    tc.print('Finished Training')
 
 # %%
 if __name__ == '__main__':
@@ -165,7 +169,7 @@ if __name__ == '__main__':
     
     # args 초기화 과정.
     what_device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    print(what_device)
+    print(f"사용된 device : {what_device}")
     args.device = torch.device(what_device)
     
     args.project_name = args.project_name if args.project_name else str(id(args))

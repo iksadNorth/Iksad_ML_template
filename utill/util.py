@@ -7,6 +7,8 @@ import torch.optim as optim
 
 import numpy as np
 
+from config.adapter import adapter
+
 
 # %%
 def save(path, net, param=False):    
@@ -25,6 +27,7 @@ def load(path, net=None):
 
 
 class SaveTool():
+    @adapter
     def __init__(self, path, net, save_frequency=1, param=False) -> None:
         self.best_score = -np.inf
         
