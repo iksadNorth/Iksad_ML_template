@@ -91,6 +91,11 @@ def train(args):
     args.matrics = [args.get_obj(v, None, remote_metrics) for v in args['Matrics']]
     tc.print('설정 완료')
     
+    # Config.json 생성
+    tc.mark('Config.json 생성')
+    path_config = archive.find(args.dir_log, "Config")
+    args.record(f"{path_config}/config.json")
+    
     break_flag = False
     break_reason = '????'
     # 모델 학습
@@ -128,7 +133,6 @@ def train(args):
             # to WandB
             tc.mark('WandB 로깅')
             wandb.log(dict_log)
-            # to file
             #########################################################################
             
             # 모델 저장. #############################################################
@@ -157,10 +161,6 @@ def train(args):
             print(f'Break Loop!!! Because of {break_reason}')
             break
     
-    # Config.json 생성
-    tc.mark('Config.json 생성')
-    path_config = archive.find(args.dir_log, "Config")
-    args.record(f"{path_config}/config.json")
     print('Finished Training')
     tc.print('Finished Training')
 

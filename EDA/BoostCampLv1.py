@@ -55,18 +55,19 @@ df['multi'] = [cls_multi(row['mask'], row['gender'], row['age']) for _, row in d
 df_refined = df[['id', 'mask', 'gender', 'age', 'multi', 'path']]
 
 # %%
-UNIT_SIZE = 5
-size = [1,3]
-classes = ['mask', 'gender', 'age']
+if __name__ == '__main__':
+    UNIT_SIZE = 5
+    size = [1,3]
+    classes = ['mask', 'gender', 'age']
 
-size = np.array(size)
-figsize = reduce(lambda x, y: x * y, size) / size * UNIT_SIZE
+    size = np.array(size)
+    figsize = reduce(lambda x, y: x * y, size) / size * UNIT_SIZE
 
-fig, ax = plt.subplots(*size, figsize=figsize)
-for idx, item in enumerate(classes):
-    sns.countplot(data=df_refined, x=item, ax=ax[idx])
+    fig, ax = plt.subplots(*size, figsize=figsize)
+    for idx, item in enumerate(classes):
+        sns.countplot(data=df_refined, x=item, ax=ax[idx])
 
-plt.show()
+    plt.show()
 
 # %%
 def title_func(row):
@@ -98,6 +99,3 @@ def view_img(data, col_img, size=(5,5), UNIT_SIZE=5, title_func=None, save_name=
     if save_name:
         plt.savefig(save_name)
     plt.show()
-# %%
-# view_img(df_refined, 'path', title_func=title_func, save_name='imgs_classified.png')
-# %%

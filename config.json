@@ -7,7 +7,7 @@
     "save_frequency" : 5,
     "print_frequency" : 50,
 
-    "SubFolder" : ["Artifact", "Config", "Metrics", "Model"],
+    "SubFolder" : ["Artifact", "Config", "Model"],
 
     "Transform": {
         "type": "ToTensor",
