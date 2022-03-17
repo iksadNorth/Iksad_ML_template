@@ -7,9 +7,13 @@ import torch.optim as optim
 from config.adapter import adapter
 
 from tqdm import tqdm
+import wandb
+
+from torchmetrics import functional as remote_metrics
 # %%
 @adapter
-def train(train_loader, net, criterion, optimizer, device, scheduler):
+def train(train_loader, net, criterion, optimizer, device, scheduler, print_frequency=1):
+    period = print_frequency
     batch_size = train_loader.batch_size 
     length = len(train_loader)
     outputs_stacked, labels_stacked = [], []
@@ -30,12 +34,15 @@ def train(train_loader, net, criterion, optimizer, device, scheduler):
         optimizer.step()
         
         scheduler.step()
-        if i % 50 == 0:
-            print(f'{i}/{length} train_loss : {loss / batch_size:2.4f}')
         
         outputs = outputs.argmax(dim=-1)
         outputs_stacked.extend(outputs)
         labels_stacked.extend(labels)
+        
+        if i % period == 0:
+            accuracy = remote_metrics.accuracy(labels, outputs)
+            print(f'{i}/{length} train_loss : {loss / batch_size:2.4f} accuracy : {accuracy:2.4%}')
+            wandb.log({'loss': loss, 'accuracy': accuracy})
     
     return torch.tensor(outputs_stacked), torch.tensor(labels_stacked)
 

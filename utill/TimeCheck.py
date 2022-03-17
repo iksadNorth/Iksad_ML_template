@@ -5,8 +5,14 @@ from time import sleep
 # %%
 class TimeCheck():
     FN_PRINT = print
-    def __init__(self) -> None:
+    def __init__(self, flag=True) -> None:
         self.queue = []
+        self.flag = flag
+    
+    def __getattribute__(self, __name: str):
+        if self.flag:
+            return self.__name
+        
     
     def mark(self, name_flag:str):
         entity = name_flag, time()

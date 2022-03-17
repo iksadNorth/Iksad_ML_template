@@ -1,5 +1,4 @@
 # %%
-from json.tool import main
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,11 +39,12 @@ class SaveTool():
     def save_per_epoch(self, epoch):
         # 주기적으로 모델 저장.
         # "{self.path}/epoch_{epoch}.pth"
-        if epoch % self.period == (self.period-1):
-            save(f"{self.path}/epoch_{epoch}.pth", self.net, self.param)
+        if epoch % self.period == 0:
+            save(f"{self.path}/epoch_{epoch}.pth", self.net)
 
     def save_best(self, score):
         # 최고 성능 갱신 시, 모델 저장.
         # "{self.path}/best.pth"
         if self.best_score < score:
-            save(f"{self.path}/best.pth", self.net, self.param)
+            save(f"{self.path}/best.pth", self.net)
+            self.best_score = score

@@ -1,12 +1,20 @@
 {
-    "project_name": "for_debug",
-    "epoch" : 1,
+    "project_name": "CIFAR10_efficientnet_b3",
+    "epoch" : 60,
 
     "dir_tree" : "/opt/ml/workspace/template/saved/$project_name",
     "dir_saved": "/opt/ml/workspace/saved",
-    "save_frequency" : 1,
+    "save_frequency" : 5,
+    "print_frequency" : 50,
 
     "SubFolder" : ["Artifact", "Config", "Metrics", "Model"],
+
+    "Transform": {
+        "type": "ToTensor",
+        "args":{
+            
+        }
+    },
 
     "DataSet": {
         "type": "CIFAR10",
@@ -17,6 +25,8 @@
             "download":true
         }
     },
+
+    "InitWeight": "Nothing",
 
     "Net": {
         "type": "PretrainedModel",
@@ -53,7 +63,7 @@
     "split" : {
         "type": "_split_train_val",
         "args":{
-            "ratio" : 0.975, 
+            "ratio" : 0.2, 
             "method_scrape" : "_scrape_random"
         }
     },
@@ -61,11 +71,11 @@
     "train": {
         "batch_size": 25, 
         "shuffle": true,
-        "num_workers" : 1
+        "num_workers" : 2
     },
     "valid": {
         "batch_size": 100, 
         "shuffle": false,
-        "num_workers" : 1
+        "num_workers" : 2
     }
 }

@@ -18,13 +18,14 @@ from dataloader.dataloader import BaseLoader
 from trainer import Trainer
 from config.container import Container
 
-from utill.util import *
+from utill.saveNload import *
 from utill.ConfusionMatrix import Analsis
 from utill.PathTree import PathTree
 import utill.split as repo_split
 from utill.TimeCheck import TimeCheck
 
 # Remote_repo.
+from torchvision import transforms as remote_vision_transforms
 from torchvision import datasets as remote_vision_dataset
 from torchvision import models as remote_vision_model
 from torch import optim as remote_optimizer
@@ -33,7 +34,9 @@ from torch import nn as remote_loss
 from torchmetrics import functional as remote_metrics
 
 # Local_repo.
+import dataloader.transformer as local_transformer
 import dataloader.dataset as local_dataset
+import dataloader.init_weight as local_init
 import model.model as local_model
 import model.optimizer as local_optimizer
 # import model.scheduler as local_scheduler
@@ -43,7 +46,7 @@ import model.loss as local_loss
 # %%
 def train(args):
     # 실행 시간 분석
-    tc = TimeCheck()
+    tc = TimeCheck(False)
     args.tc = tc
     
     tc.mark('설정 준비') 
@@ -56,13 +59,19 @@ def train(args):
     args.dir_log = f"{args.dir_saved}/{args.project_name}"
     
     # transform 설정.
-    args.transform = ToTensor()
+    args.transform = args.get_obj_with_param('Transform', local_transformer, remote_vision_transforms)
     
     # dataset과 dataloader로 데이터 로드시킴.
     args.dataset = args.get_obj_with_param('DataSet', local_dataset, remote_vision_dataset,transform=args.transform)
     
     # model을 로드하고 가능하다면 GPU 이용할 수 있게 만들기
     args.net = args.get_obj_with_param('Net', local_model, remote_vision_model)
+    print("can use", torch.cuda.device_count(), "GPUs")
+    args.net = nn.DataParallel(args.net)
+    
+    # model 파라미터 초기화
+    args.init_weight = args.get_obj(args['InitWeight'], local_init)
+    args.net.apply(args.init_weight)
     
     # optimizer 설정.
     trainable_params = filter(lambda p: p.requires_grad, args.net.parameters())
@@ -96,16 +105,16 @@ def train(args):
 
             # 모델 평가. ############################################################
             tc.mark('Score 계산')
-            train_score = args.main_matric.__name__, args.main_matric(train_preds, train_answers)
-            val_score = args.main_matric.__name__, args.main_matric(val_preds, val_answers)
+            train_score_name, train_score = args.main_matric.__name__, args.main_matric(train_preds, train_answers)
+            val_score_name, val_score = args.main_matric.__name__, args.main_matric(val_preds, val_answers)
             scores = {matric.__name__ : matric(val_preds, val_answers) for matric in args.matrics}
             #########################################################################
             
             # 모델 로깅. ############################################################
             tc.mark('모델 로깅 설정 준비')
             dict_log = {
-                f'train_{train_score[0]}' : train_score[1],
-                f'valid_{val_score[0]}' : val_score[1],
+                f'train_{train_score_name}' : train_score,
+                f'valid_{val_score_name}' : val_score,
             }
             dict_log.update({f'valid_{k}' : v for k, v in scores.items()})
             
@@ -125,13 +134,12 @@ def train(args):
             savetool = SaveTool(args.path_save, args)
             
             savetool.save_per_epoch(epoch)
-            savetool.save_best(val_score[1])
+            savetool.save_best(val_score)
             #########################################################################
             
             # 오답 이유 분석 #########################################################
             tc.mark('오답 이유 분석')
             args.path_artifact = archive.find(args.dir_log, "Artifact")
-            # CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, path_artifact=args.path_artifact, save_frequency=args.save_frequency)
             CMtools = Analsis(val_preds, val_answers, val_data, args.dataset.classes, args)
             
             tc.mark('confusion_matrix 시작')
